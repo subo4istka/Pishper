@@ -64,7 +64,7 @@ leave them off.
 ```bash
 pyinstaller Pishper.spec --noconfirm
 dist\Pishper.exe                        # it must actually come up in the tray
-gh release create vX.Y.Z dist\Pishper.exe --notes-file notes.md
+gh release create v2 dist\Pishper.exe --notes-file notes.md
 ```
 
 ## Code style

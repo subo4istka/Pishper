@@ -1,9 +1,8 @@
 # Changelog
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-версии следуют [SemVer](https://semver.org/lang/ru/).
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
 
-## [1.0.0] — 2026-08-20
+## v1 — 2026-08-20
 
 Первый публичный релиз.
 
@@ -29,5 +28,3 @@
 - Автозапуск через реестр Windows, статистика использования в
   `~/.pishper/stats.txt`.
 - Сборка в одиночный `.exe` через PyInstaller.
-
-[1.0.0]: https://github.com/subo4istka/Pishper/releases/tag/v1.0.0
