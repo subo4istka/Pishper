@@ -194,7 +194,8 @@ pip install -r requirements-dev.txt
 pyinstaller Pishper.spec --noconfirm
 ```
 
-The result lands in `dist\Pishper.exe` (~60 MB). The spec file is already tuned: unused
+The result lands in `dist\Pishper.exe` (55–60 MB — the size depends on your
+Python version: 3.14 ships a fatter standard library than 3.12). The spec file is already tuned: unused
 PyQt6 modules and heavy scientific libraries are excluded, `optimize=2` is on,
 and `certifi` TLS roots plus `pynput` platform backends are bundled. If
 [UPX](https://upx.github.io/) is on your PATH it is picked up automatically to
