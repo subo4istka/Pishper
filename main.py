@@ -10,6 +10,16 @@ import traceback
 import datetime
 
 
+# Windows consoles run a legacy code page (cp1251/cp866/cp1252) that cannot
+# encode the emoji used in the log lines below.  Replacing unencodable
+# characters keeps a stray log line from raising UnicodeEncodeError.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass  # frozen windowed build: no real stdout to reconfigure
+
+
 def _log(msg: str):
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
     print(f"[{now}] {msg}", flush=True)

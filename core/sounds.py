@@ -5,6 +5,7 @@ a keepalive (prevents Windows 11 audio sleep) and the playback engine.
 Sound data is injected directly into the stream callback — zero overhead.
 """
 
+import sys
 import threading
 import numpy as np
 import sounddevice as sd
@@ -13,7 +14,18 @@ import datetime
 
 def _log(msg: str):
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    print(f"[{now}] {msg}", flush=True)
+    line = f"[{now}] {msg}"
+    try:
+        print(line, flush=True)
+    except UnicodeEncodeError:
+        # A legacy console code page (cp1251/cp866/cp1252) cannot encode the
+        # emoji in these lines.  This matters more than it looks: _log is
+        # called from the except branch of _init_stream(), so a raise here
+        # turns "no audio device" into a failed import of the whole module.
+        enc = getattr(sys.stdout, "encoding", None) or "ascii"
+        print(line.encode(enc, "replace").decode(enc), flush=True)
+    except (AttributeError, ValueError):
+        pass  # frozen windowed build: stdout may be absent or already closed
 
 
 # ═════════════════════════════════════════════════════════════════════
