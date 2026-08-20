@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.py   text diff=python
+*.md   text
+*.txt  text
+*.spec text
+*.ps1  text eol=crlf
+
+*.png  binary
+*.ico  binary
+*.exe  binary
+*.rar  binary

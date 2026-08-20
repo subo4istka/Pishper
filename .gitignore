@@ -1,0 +1,36 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ── PyInstaller build output ──
+build/
+dist/
+*.manifest
+
+# ── Local backups of previous versions (not part of the public tree) ──
+backup/
+assets/backup/
+
+# ── Logs & scratch ──
+*.log
+scratch/
+
+# ── Local tooling / IDE ──
+.claude/
+.vscode/
+.idea/
+
+# ── Windows ──
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# ── Temp ──
+*.tmp
+
+# ── Local-only material kept out of the repo and out of the .exe payload ──
+_local/

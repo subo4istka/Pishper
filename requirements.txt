@@ -1,0 +1,9 @@
+# Runtime dependencies (Windows)
+openai>=1.0        # OpenAI / Groq (OpenAI-compatible) transcription API
+httpx              # HTTP client for Deepgram + GigaChat REST calls
+socksio            # SOCKS proxy support for httpx
+sounddevice        # microphone capture via PortAudio
+numpy              # audio buffers, RMS level / VAD math
+lameenc            # on-the-fly MP3 encoding
+pynput             # global hotkey listening (combinations, mouse buttons)
+PyQt6              # tray icon, settings window, recording overlay

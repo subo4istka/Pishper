@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Build the standalone Windows executable: pyinstaller Pishper.spec --noconfirm
+pyinstaller>=6.0
