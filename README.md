@@ -32,6 +32,21 @@ Pishper живёт в системном трее и не имеет главн�
 сообщения, коммит-месседжи, промпты к ИИ, ответы в поддержке, черновики
 документов — всё это удобнее сказать.
 
+## Как это выглядит
+
+<table>
+<tr>
+<td align="center" width="32%">
+<img src="docs/screenshots/tray-menu.png" width="203" alt="Меню в системном трее"><br>
+<sub>Меню в трее — всё управление приложением</sub>
+</td>
+<td align="center" width="68%">
+<img src="docs/screenshots/settings-connection.png" width="430" alt="Настройки — Подключение"><br>
+<sub>Подключение: провайдер, ключ, прокси, проверка связи</sub>
+</td>
+</tr>
+</table>
+
 ## Возможности
 
 | | |
@@ -109,6 +124,19 @@ Pishper живёт в системном трее и не имеет главн�
 желаемую клавишу или кнопку мыши), звуковая тема, индикатор записи, автозапуск,
 словарь автозамен.
 
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="docs/screenshots/settings-recognition.png" width="420" alt="Настройки — Распознавание"><br>
+<sub>Распознавание</sub>
+</td>
+<td align="center" width="50%">
+<img src="docs/screenshots/settings-controls.png" width="420" alt="Настройки — Управление"><br>
+<sub>Управление</sub>
+</td>
+</tr>
+</table>
+
 Статистика использования (число сессий и суммарные минуты записи) пишется в
 `%USERPROFILE%\.pishper\stats.txt`.
 
@@ -171,6 +199,8 @@ ui/hotkey_recorder.py    захват горячей клавиши
 ui/overlay.py            индикатор записи с уровнем сигнала
 ui/welcome.py            приветственное окно
 tools/diagnostics/       скрипты проверки окружения при отладке сборки
+tools/make_screenshots.py  перерисовка скриншотов для документации
+docs/screenshots/        скриншоты, отрисованные из виджетов
 ```
 
 ## Сборка из исходников

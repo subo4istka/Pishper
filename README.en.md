@@ -35,6 +35,21 @@ gigabytes and runs on any laptop without a GPU.
 **Why bother:** dictating is 3–4× faster than typing. Long messages, commit
 messages, AI prompts, support replies, document drafts — all faster spoken.
 
+## What it looks like
+
+<table>
+<tr>
+<td align="center" width="32%">
+<img src="docs/screenshots/tray-menu.png" width="203" alt="System tray menu"><br>
+<sub>Tray menu — the entire app lives here</sub>
+</td>
+<td align="center" width="68%">
+<img src="docs/screenshots/settings-connection.png" width="430" alt="Settings — Connection"><br>
+<sub>Connection: provider, key, proxy, latency check</sub>
+</td>
+</tr>
+</table>
+
 ## Features
 
 | | |
@@ -111,6 +126,19 @@ timeout for continuous mode (0.5–5 s), recording quality (MP3 bitrate).
 key or mouse button you want), sound theme, recording overlay, autostart, and the
 replacement dictionary.
 
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="docs/screenshots/settings-recognition.png" width="420" alt="Settings — Recognition"><br>
+<sub>Recognition</sub>
+</td>
+<td align="center" width="50%">
+<img src="docs/screenshots/settings-controls.png" width="420" alt="Settings — Controls"><br>
+<sub>Controls</sub>
+</td>
+</tr>
+</table>
+
 Usage statistics (session count and total recorded minutes) are written to
 `%USERPROFILE%\.pishper\stats.txt`.
 
@@ -172,6 +200,8 @@ ui/hotkey_recorder.py    hotkey capture
 ui/overlay.py            recording overlay with input level
 ui/welcome.py            welcome window
 tools/diagnostics/       environment checks for debugging builds
+tools/make_screenshots.py  re-renders the documentation screenshots
+docs/screenshots/        screenshots grabbed from the widgets themselves
 ```
 
 ## Building from source

@@ -38,6 +38,18 @@ playback) — useful when a PyInstaller build misbehaves.
   and a `_transcribe_*` function in `core/transcriber.py` — the existing four are
   the pattern to follow.
 
+## Screenshots
+
+`docs/screenshots/` is generated, not hand-captured:
+
+```bash
+python tools/make_screenshots.py
+```
+
+The script grabs the widgets with a synthetic config, so the images stay in sync
+with the UI and never carry anyone's API key or proxy credentials. Re-run it when
+you change the settings window, and commit the result.
+
 ## Code style
 
 Match the surrounding code rather than a linter:
