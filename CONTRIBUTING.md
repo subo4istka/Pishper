@@ -50,6 +50,23 @@ The script grabs the widgets with a synthetic config, so the images stay in sync
 with the UI and never carry anyone's API key or proxy credentials. Re-run it when
 you change the settings window, and commit the result.
 
+## Releasing
+
+The `.exe` attached to a release is built locally and launched at least once
+before it is uploaded. CI builds the same thing on every tag, but its artifact is
+never published: a green build only proves PyInstaller finished, not that the
+binary starts. A bundle whose DLLs were mangled by `strip` builds without a
+complaint and then dies on `LoadLibrary` — and the runner *has* `strip` (Git for
+Windows ships one) while a typical dev box does not, so the difference only shows
+up in what you publish. Hence `strip=False` and `upx=False` in `Pishper.spec`;
+leave them off.
+
+```bash
+pyinstaller Pishper.spec --noconfirm
+dist\Pishper.exe                        # it must actually come up in the tray
+gh release create vX.Y.Z dist\Pishper.exe --notes-file notes.md
+```
+
 ## Code style
 
 Match the surrounding code rather than a linter:

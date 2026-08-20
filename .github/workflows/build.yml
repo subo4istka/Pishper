@@ -37,8 +37,8 @@ jobs:
           name: Pishper-exe
           path: dist/Pishper.exe
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/Pishper.exe
+# The artifact is deliberately NOT attached to the release.  A green build only
+# proves PyInstaller finished, not that the .exe starts — a bundle with corrupted
+# DLLs builds cleanly and then dies on LoadLibrary, and nothing here would catch
+# it.  Release binaries are built and actually launched on a real desktop first
+# — see CONTRIBUTING.md.

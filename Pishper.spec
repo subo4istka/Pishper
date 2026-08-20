@@ -73,8 +73,14 @@ exe = EXE(
     name='Pishper',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,       # strip debug symbols from binaries
-    upx=True,         # compress with UPX if available
+    # Both must stay off on Windows.  GNU strip does not understand PE files:
+    # it silently mangles python3xx.dll and the Qt DLLs, and the result dies at
+    # startup with "Failed to load Python DLL / LoadLibrary".  It only looked
+    # harmless because strip is usually absent on a dev box — a CI runner has
+    # it (Git for Windows ships one) and produced a broken binary.  UPX is off
+    # for the same reason plus antivirus false positives.
+    strip=False,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,    # no console window

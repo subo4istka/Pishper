@@ -227,13 +227,14 @@ pyinstaller Pishper.spec --noconfirm
 The result lands in `dist\Pishper.exe` (55–60 MB — the size depends on your
 Python version: 3.14 ships a fatter standard library than 3.12). The spec file is already tuned: unused
 PyQt6 modules and heavy scientific libraries are excluded, `optimize=2` is on,
-and `certifi` TLS roots plus `pynput` platform backends are bundled. If
-[UPX](https://upx.github.io/) is on your PATH it is picked up automatically to
-shrink the binary.
+and `certifi` TLS roots plus `pynput` platform backends are bundled.
 
-The spec asks for `strip` and `upx`, neither of which ships with Windows:
-PyInstaller prints a `FileNotFoundError: [WinError 2]` traceback, carries on and
-exits 0. That is expected — the build is valid.
+`strip` and `upx` are off on purpose — do not turn them on. GNU strip does not
+understand the PE format: it silently mangles `python3xx.dll` and the Qt DLLs,
+and the resulting build dies at startup with `Failed to load Python DLL …
+LoadLibrary`. A dev box usually has no `strip` at all, which hides the problem;
+anywhere it exists (it ships with Git for Windows, for one) the build comes out
+broken. UPX is off for the same reason, plus antivirus false positives.
 
 Verify the environment before building:
 
