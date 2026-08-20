@@ -87,9 +87,9 @@ messages, AI prompts, support replies, document drafts — all faster spoken.
 
 | Provider | Key | Models | Notes |
 |---|---|---|---|
-| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | Whisper Large V3 Turbo / V3 / Distil EN | Free tier, sign-up takes a couple of clicks, fastest transcription. **Best starting point.** |
-| **Deepgram** | [console.deepgram.com](https://console.deepgram.com) | Nova-3, Nova-2 | Free starting credits. Nova-3 does code-switching — two languages in one phrase. |
 | **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | Whisper v1 | Requires an account with a funded balance. |
+| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | Whisper Large V3 Turbo / V3 / Distil EN | Free tier, sign-up takes a couple of clicks, fastest transcription. |
+| **Deepgram** | [console.deepgram.com](https://console.deepgram.com) | Nova-3, Nova-2 | Free starting credits. Nova-3 does code-switching — two languages in one phrase. |
 | **GigaChat** | [developers.sber.ru/studio](https://developers.sber.ru/studio) | GigaChat-2 Pro / Max, GigaChat Pro / Max | Russian service, reachable without a VPN. Needs the Authorization Data from a GigaChat API project. |
 
 Keys are stored locally in `%USERPROFILE%\.pishper\config.json` and are never

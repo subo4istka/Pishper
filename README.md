@@ -85,9 +85,9 @@ Pishper живёт в системном трее и не имеет главн�
 
 | Провайдер | Ключ | Модели | Комментарий |
 |---|---|---|---|
-| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | Whisper Large V3 Turbo / V3 / Distil EN | Бесплатный лимит, регистрация за пару кликов, самая быстрая транскрипция. **Лучший старт.** |
-| **Deepgram** | [console.deepgram.com](https://console.deepgram.com) | Nova-3, Nova-2 | Бесплатные стартовые кредиты. Nova-3 умеет code-switching — русский и английский в одной фразе. |
 | **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | Whisper v1 | Нужен аккаунт с оплаченным балансом. |
+| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | Whisper Large V3 Turbo / V3 / Distil EN | Бесплатный лимит, регистрация за пару кликов, самая быстрая транскрипция. |
+| **Deepgram** | [console.deepgram.com](https://console.deepgram.com) | Nova-3, Nova-2 | Бесплатные стартовые кредиты. Nova-3 умеет code-switching — русский и английский в одной фразе. |
 | **GigaChat** | [developers.sber.ru/studio](https://developers.sber.ru/studio) | GigaChat-2 Pro / Max, GigaChat Pro / Max | Российский сервис, работает без VPN. Нужны Authorization Data из проекта GigaChat API. |
 
 Ключи хранятся локально в `%USERPROFILE%\.pishper\config.json` и никуда, кроме
