@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize, QObject, pyqtSignal
 from PyQt6.QtGui import QFont
 
-from core.config import AppConfig, PROVIDERS, LANGUAGES
+from core.config import AppConfig, PROVIDERS, LANGUAGES, FILE_PROVIDERS
 
 import os
 import tempfile
@@ -330,7 +330,7 @@ class SettingsWindow(QDialog):
         super().__init__(parent)
         self.config = config
         self.setWindowTitle("Pishper — Настройки")
-        self.setFixedSize(660, 520)
+        self.setFixedSize(660, 580)
         self.setStyleSheet(_STYLE)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowCloseButtonHint)
         # Window icon
@@ -404,6 +404,8 @@ class SettingsWindow(QDialog):
         kc.addLayout(key_head); kc.addWidget(self.api_key_edit)
         kc.addWidget(self.api_key_hint)
         lay.addLayout(kc)
+
+        self.api_key_edit.textChanged.connect(self._update_file_hint)
 
         self.proxy_check = QCheckBox("Использовать прокси")
         lay.addWidget(self.proxy_check)
@@ -513,6 +515,17 @@ class SettingsWindow(QDialog):
         quality_col.addWidget(self.bitrate_hint)
         lay.addLayout(quality_col)
 
+        # ── Сервис для аудиофайлов (пункт трея «Распознать аудиофайл») ──
+        self.file_provider_combo = QComboBox()
+        for key in FILE_PROVIDERS:
+            label = "GigaChat (Сбер)" if key == "gigachat" else PROVIDERS[key]["name"]
+            self.file_provider_combo.addItem(label, key)
+        self.file_provider_combo.currentIndexChanged.connect(self._update_file_hint)
+        self.file_provider_hint = self._hint("")
+        file_col = self._field("Распознавание аудиофайлов", self.file_provider_combo)
+        file_col.addWidget(self.file_provider_hint)
+        lay.addLayout(file_col)
+
         lay.addStretch(); return p
 
     # ── Реакции полей страницы «Распознавание» ──
@@ -540,6 +553,23 @@ class SettingsWindow(QDialog):
     def _on_bitrate_changed(self, br: int, checked: bool) -> None:
         if checked:
             self.bitrate_hint.setText(dict(_BITRATES).get(br, ""))
+
+    def _update_file_hint(self, *_args) -> None:
+        if not hasattr(self, "file_provider_hint"):
+            return
+        key = self.file_provider_combo.currentData()
+        if key == self.provider_combo.currentData():
+            has_key = bool(self.api_key_edit.text().strip())
+        else:
+            has_key = bool(self.config.api_keys.get(key, "").strip())
+        name = PROVIDERS[key]["name"]
+        if has_key:
+            text = "Файл выбирается в трее: «Распознать аудиофайл…»."
+        else:
+            text = f"Нет ключа {name} — укажите его в «Подключении»."
+        if key == "gigachat":
+            text += " Лимит GigaChat — 35 МБ."
+        self.file_provider_hint.setText(text)
 
     def _bitrate(self) -> int:
         br = self.bitrate_group.checkedId()
@@ -649,6 +679,7 @@ class SettingsWindow(QDialog):
         self._current_provider = key
         # Load key for new provider
         self.api_key_edit.setText(self.config.api_keys.get(key, ""))
+        self._update_file_hint()
 
     @staticmethod
     def _key_hint_html(prov: dict) -> str:
@@ -706,6 +737,9 @@ class SettingsWindow(QDialog):
         idx = self.theme_combo.findData(self.config.sound_theme)
         if idx >= 0: self.theme_combo.setCurrentIndex(idx)
         self.autostart_check.setChecked(self.config.autostart)
+        idx = self.file_provider_combo.findData(self.config.file_provider)
+        self.file_provider_combo.setCurrentIndex(max(idx, 0))
+        self._update_file_hint()
 
     # ── Проверка подключения ──
 
@@ -781,6 +815,7 @@ class SettingsWindow(QDialog):
         self.config.show_overlay = self.overlay_check.isChecked()
         self.config.sound_theme = self.theme_combo.currentData() or "spring"
         self.config.autostart = self.autostart_check.isChecked()
+        self.config.file_provider = self.file_provider_combo.currentData()
         if hasattr(self, "_pending_hotkey") and self._pending_hotkey:
             self.config.hotkey = self._pending_hotkey
             self.config.hotkey_display = self._pending_hotkey_display

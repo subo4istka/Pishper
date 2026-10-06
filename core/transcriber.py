@@ -194,7 +194,10 @@ def _is_hallucination(text: str) -> bool:
     return any(p in lower for p in _HALLUCINATION_PATTERNS)
 
 
-def _transcribe_deepgram(audio_bytes: bytes, config: AppConfig) -> str:
+def _transcribe_deepgram(audio_bytes: bytes, config: AppConfig,
+                         content_type: str = "audio/mpeg",
+                         timeout: float | None = None,
+                         paragraphs: bool = False) -> str:
     """Call Deepgram REST API for transcription."""
     import json as _json
     from urllib.parse import urlencode
@@ -209,11 +212,14 @@ def _transcribe_deepgram(audio_bytes: bytes, config: AppConfig) -> str:
         params["language"] = config.language
     if config.mode == "translate":
         params["language"] = "en"
+    if paragraphs:
+        # Длинная запись: Deepgram сам разобьёт текст на абзацы.
+        params["paragraphs"] = "true"
 
     url = f"https://api.deepgram.com/v1/listen?{urlencode(params)}"
     headers = {
         "Authorization": f"Token {config.active_api_key}",
-        "Content-Type": "audio/mpeg",
+        "Content-Type": content_type,
     }
 
     print(f"[Deepgram] Отправка {len(audio_bytes)} байт, model={params['model']}")
@@ -228,7 +234,8 @@ def _transcribe_deepgram(audio_bytes: bytes, config: AppConfig) -> str:
 
     # Сетевые сбои (в том числе устаревшее соединение из пула) и 5xx/429
     # повторяет call_with_retries снаружи.
-    resp = client.post(url, headers=headers, content=payload)
+    extra = {"timeout": httpx.Timeout(timeout, connect=5.0)} if timeout else {}
+    resp = client.post(url, headers=headers, content=payload, **extra)
     status, body = resp.status_code, resp.content
 
     dt = _t.perf_counter() - t0
@@ -244,25 +251,31 @@ def _transcribe_deepgram(audio_bytes: bytes, config: AppConfig) -> str:
 
     data = _json.loads(body)
     try:
-        text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
+        alt = data["results"]["channels"][0]["alternatives"][0]
     except (KeyError, IndexError):
         return ""
+    text = (alt.get("paragraphs") or {}).get("transcript") or alt.get("transcript", "")
     return text.strip()
 
 
-def _transcribe_gigachat(audio_bytes: bytes, config: AppConfig) -> str:
+def _transcribe_gigachat(audio_bytes: bytes, config: AppConfig,
+                         filename: str = "audio.mp3",
+                         content_type: str = "audio/mpeg",
+                         timeout: float | None = None) -> str:
     """Upload audio to GigaChat files API and transcribe via chat completions."""
+    extra = {"timeout": httpx.Timeout(timeout, connect=5.0)} if timeout else {}
     client = _get_gigachat_client(config)
     token = _get_gigachat_token(client, config)
 
     # 1. Upload audio file to GigaChat
     files_url = "https://gigachat.devices.sberbank.ru/api/v1/files"
     auth_header = {"Authorization": f"Bearer {token}"}
-    files = {"file": ("audio.mp3", bytes(audio_bytes), "audio/mpeg")}
+    files = {"file": (filename, bytes(audio_bytes), content_type)}
     data = {"purpose": "general"}
 
     print(f"[GigaChat] Отправка {len(audio_bytes)} байт...")
-    resp = client.post(files_url, headers=auth_header, files=files, data=data)
+    resp = client.post(files_url, headers=auth_header, files=files, data=data,
+                       **extra)
     if resp.status_code != 200:
         raise status_error(resp.status_code, resp.content, "GigaChat", config)
 
@@ -303,6 +316,7 @@ def _transcribe_gigachat(audio_bytes: bytes, config: AppConfig) -> str:
             chat_url,
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json=body,
+            **extra,
         )
         if chat_resp.status_code != 200:
             raise status_error(chat_resp.status_code, chat_resp.content, "GigaChat", config)
@@ -411,6 +425,87 @@ def transcribe(audio_bytes: bytes, config: AppConfig) -> str:
         for old, new in config.replacements.items():
             text = text.replace(old, new)
 
+    return text
+
+
+# ── Распознавание готового аудиофайла ────────────────────────────────────────
+
+# Длинная запись обрабатывается заметно дольше короткой фразы.
+_FILE_TIMEOUT = 600.0
+_GIGACHAT_MAX_BYTES = 35 * 1024 * 1024   # лимит GigaChat на один аудиофайл
+
+
+def file_config(config: AppConfig) -> AppConfig:
+    """Конфиг для файла: сервис из config.file_provider, ключ — его же.
+
+    Модель берём текущую, если провайдер совпадает с основным,
+    иначе — модель по умолчанию у сервиса для файлов.
+    """
+    from dataclasses import replace
+    from core.config import FILE_PROVIDERS
+
+    provider = config.file_provider if config.file_provider in FILE_PROVIDERS else FILE_PROVIDERS[0]
+    if provider == config.provider:
+        model = config.model
+    else:
+        model = PROVIDERS[provider]["models"][0][0]
+    # Перевод для файлов не делаем: Deepgram его не умеет, а нужна расшифровка.
+    return replace(config, provider=provider, model=model, mode="transcribe",
+                   api_keys=dict(config.api_keys), replacements=dict(config.replacements))
+
+
+def transcribe_file(path: str, config: AppConfig) -> str:
+    """Распознать аудиофайл сервисом, выбранным в настройках (Deepgram/GigaChat).
+
+    Файл уходит как есть, без перекодирования.  Ошибки — ApiError.
+    """
+    from pathlib import Path
+    from core.config import AUDIO_TYPES, GIGACHAT_AUDIO_TYPES
+
+    cfg = file_config(config)
+    name = provider_name(cfg)
+    if not cfg.active_api_key:
+        raise ApiError(
+            "auth", f"{name}: нет ключа",
+            f"Укажите API-ключ для {name} в настройках (раздел «Подключение»).",
+        )
+
+    p = Path(path)
+    content_type = AUDIO_TYPES.get(p.suffix.lower())
+    if cfg.provider == "gigachat" and content_type is not None:
+        content_type = GIGACHAT_AUDIO_TYPES.get(p.suffix.lower())
+        if content_type is None:
+            raise ApiError("request", "GigaChat: формат не поддерживается",
+                           f"GigaChat не принимает {p.suffix}. "
+                           "Выберите Deepgram для файлов в настройках.")
+    if content_type is None:
+        raise ApiError("request", "Неподдерживаемый файл",
+                       f"Формат {p.suffix or '(без расширения)'} не поддерживается.")
+    audio = p.read_bytes()
+    if not audio:
+        return ""
+    if cfg.provider == "gigachat" and len(audio) > _GIGACHAT_MAX_BYTES:
+        raise ApiError("request", "GigaChat: файл слишком большой",
+                       f"GigaChat принимает аудио до 35 МБ, а файл — "
+                       f"{len(audio) / 1024 / 1024:.0f} МБ. Выберите Deepgram в настройках.")
+
+    if cfg.provider == "gigachat":
+        text = call_with_retries(
+            lambda: _transcribe_gigachat(audio, cfg, p.name, content_type,
+                                         timeout=_FILE_TIMEOUT),
+            name=name, config=cfg, on_retry=_log_retry,
+        )
+    else:
+        text = call_with_retries(
+            lambda: _transcribe_deepgram(audio, cfg, content_type,
+                                         timeout=_FILE_TIMEOUT, paragraphs=True),
+            name=name, config=cfg, on_retry=_log_retry,
+        )
+
+    # Фильтр галлюцинаций здесь не нужен: он рассчитан на тишину в коротких
+    # фразах и на длинной записи выбросил бы весь текст из-за одного слова.
+    for old, new in cfg.replacements.items():
+        text = text.replace(old, new)
     return text
 
 

@@ -36,6 +36,9 @@ class PishperTray(QSystemTrayIcon):
         self.action_auto_enter.setCheckable(True)
         menu.addAction(self.action_auto_enter)
 
+        self.action_transcribe_file = QAction("📂  Распознать аудиофайл…")
+        menu.addAction(self.action_transcribe_file)
+
         menu.addSeparator()
 
         self.action_mode_transcribe = QAction("  Транскрипция")

@@ -33,7 +33,7 @@ from pynput.mouse import Listener as MouseListener, Button
 from core.config import AppConfig
 from core.recorder import AudioRecorder
 from core.continuous import ContinuousRecorder
-from core.transcriber import transcribe
+from core.transcriber import transcribe, transcribe_file, file_config
 from core.errors import ApiError
 from core.typer import type_text, send_enter
 from core.sounds import play_start, play_stop, play_cancel, set_theme
@@ -318,6 +318,7 @@ class Orchestrator(QObject):
     sig_transcription_done = pyqtSignal(str)
     sig_continuous_chunk = pyqtSignal(bytes)
     sig_error = pyqtSignal(str, str, str)   # title, message, kind
+    sig_file_done = pyqtSignal(str, str, bool)  # audio path, text, ok
 
     def __init__(self) -> None:
         super().__init__()
@@ -342,6 +343,7 @@ class Orchestrator(QObject):
         )
         self.tray.action_copy_last.triggered.connect(self._copy_last)
         self.tray.action_continuous.triggered.connect(self._toggle_continuous)
+        self.tray.action_transcribe_file.triggered.connect(self._pick_audio_file)
 
         self._last_text = ""  # stores last transcription
         self._last_error = ("", 0.0)  # (kind, monotonic ts) — anti-spam
@@ -364,6 +366,7 @@ class Orchestrator(QObject):
         self.sig_transcription_done.connect(self._on_transcription)
         self.sig_continuous_chunk.connect(self._on_continuous_chunk)
         self.sig_error.connect(self._on_error)
+        self.sig_file_done.connect(self._on_file_done)
 
         # ---- hotkey state ----
         self._hotkey_listener = None   # pynput listener (keyboard)
@@ -608,6 +611,79 @@ class Orchestrator(QObject):
                 )
             if self.config.sound_enabled:
                 play_start()
+
+    # ---- audio file ----
+
+    def _pick_audio_file(self) -> None:
+        from PyQt6.QtWidgets import QFileDialog
+        from core.config import AUDIO_TYPES
+        from core.errors import provider_name
+
+        masks = " ".join(f"*{ext}" for ext in AUDIO_TYPES)
+        path, _ = QFileDialog.getOpenFileName(
+            None, "Pishper — аудиофайл для распознавания", "",
+            f"Аудио ({masks});;Все файлы (*)",
+        )
+        if not path:
+            return
+
+        name = provider_name(file_config(self.config))
+        self.tray.action_transcribe_file.setEnabled(False)
+        self.tray.action_transcribe_file.setText(f"⏳  Распознаю файл ({name})…")
+        self.tray.show_message("Pishper", f"Отправляю файл в {name}…")
+        threading.Thread(target=self._transcribe_file_worker,
+                         args=(path,), daemon=True).start()
+
+    def _transcribe_file_worker(self, path: str) -> None:
+        """Отдельный поток: длинный файл не должен держать очередь диктовки."""
+        try:
+            t0 = time.perf_counter()
+            text = transcribe_file(path, self.config)
+            print(f"[Pishper] Файл за {time.perf_counter() - t0:.1f}с: "
+                  f"{path} → {len(text)} символов")
+            self.sig_file_done.emit(path, text, True)
+        except ApiError as err:
+            print(f"[Pishper] Файл: {err.title}: {err.detail}")
+            self.sig_error.emit(f"Pishper — {err.title}", err.user_text, err.kind)
+            self.sig_file_done.emit(path, "", False)
+        except Exception:
+            tb = traceback.format_exc()
+            print(f"[Pishper] ОШИБКА (файл):\n{tb}")
+            self.sig_error.emit("Pishper — ошибка",
+                                tb.strip().splitlines()[-1], "unknown")
+            self.sig_file_done.emit(path, "", False)
+
+    def _on_file_done(self, path: str, text: str, ok: bool) -> None:
+        self.tray.action_transcribe_file.setEnabled(True)
+        self.tray.action_transcribe_file.setText("📂  Распознать аудиофайл…")
+        if not ok:
+            return
+        if not text:
+            self.tray.show_message("Pishper", "В файле не нашлось речи.")
+            return
+
+        from pathlib import Path
+        from core.typer import _set_clipboard
+
+        self._last_text = text
+        self.tray.action_copy_last.setEnabled(True)
+        self.tray.action_copy_last.setText(f"📋  {text[:40]}{'…' if len(text) > 40 else ''}")
+        _set_clipboard(text)
+
+        # Текст кладём рядом с аудио, не затирая существующие файлы.
+        src = Path(path)
+        out = src.with_suffix(".txt")
+        n = 2
+        while out.exists():
+            out = src.with_name(f"{src.stem} ({n}).txt")
+            n += 1
+        try:
+            out.write_text(text, encoding="utf-8")
+            where = f"Сохранено в {out.name} и скопировано в буфер."
+        except OSError as exc:
+            print(f"[Pishper] Не удалось сохранить {out}: {exc}")
+            where = "Текст скопирован в буфер (сохранить .txt не удалось)."
+        self.tray.show_message("Pishper — файл распознан", where)
 
     # ---- errors ----
 

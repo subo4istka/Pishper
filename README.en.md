@@ -105,6 +105,7 @@ sent anywhere except the provider you selected.
 | Translate instead of transcribe | Tray menu → **Перевод → English** |
 | Copy the last phrase | Tray menu → **📋 Последняя фраза** |
 | Auto-press `Enter` | Tray menu → **⏎ Автоотправка** |
+| Transcribe an audio file | Tray menu → **📂 Распознать аудиофайл…** |
 
 Text is inserted through the clipboard (`Ctrl+V` at the Win32 level), so it works
 in every application, including those where per-character key emulation breaks.
@@ -120,7 +121,8 @@ you are not left guessing why nothing works.
 
 **Распознавание (Recognition)** — language, mode (transcribe / translate), model
 prompt (up to 400 characters — sets punctuation style and term spelling), silence
-timeout for continuous mode (0.5–5 s), recording quality (MP3 bitrate).
+timeout for continuous mode (0.5–5 s), recording quality (MP3 bitrate),
+service for audio files (Deepgram or GigaChat).
 
 **Управление (Controls)** — hotkey binding (click the button, then just press the
 key or mouse button you want), sound theme, recording overlay, autostart, and the

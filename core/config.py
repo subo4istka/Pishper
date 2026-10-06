@@ -80,6 +80,36 @@ PROVIDERS = {
 }
 
 
+# Кто умеет распознавать готовые аудиофайлы (пункт трея «Распознать файл»).
+# Оба принимают файл как есть — без перекодирования на нашей стороне.
+FILE_PROVIDERS = ("deepgram", "gigachat")
+
+# Расширение → MIME для загрузки файла.
+AUDIO_TYPES = {
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".opus": "audio/ogg",
+    ".m4a": "audio/mp4",
+    ".mp4": "audio/mp4",
+    ".aac": "audio/aac",
+    ".flac": "audio/flac",
+    ".webm": "audio/webm",
+}
+
+# GigaChat ждёт свои MIME-типы (документация «Загрузить файл») и принимает
+# только эти форматы — flac и aac он не берёт.
+GIGACHAT_AUDIO_TYPES = {
+    ".mp3": "audio/mp3",
+    ".m4a": "audio/x-m4a",
+    ".mp4": "audio/mp4",
+    ".wav": "audio/wav",
+    ".ogg": "audio/x-ogg",
+    ".opus": "audio/opus",
+    ".webm": "audio/webm",
+}
+
+
 @dataclass
 class AppConfig:
     """Stores all user-facing settings."""
@@ -107,6 +137,7 @@ class AppConfig:
     hotkey2_display: str = ""
     hotkey2_vk: int = 0
     first_run_seen: bool = False   # has the user seen the welcome guide?
+    file_provider: str = "deepgram"  # сервис для аудиофайлов из трея: FILE_PROVIDERS
 
     def __post_init__(self):
         if self.replacements is None:
